@@ -250,8 +250,6 @@ local function WeaponCanPenetrate(Weapon, TraceData, Target, TargetPos)
 		end
 
 		if tr.Hit then -- Initial hit success
-			CurTimes = CurTimes + 1
-
 			LastPos = tr.HitPos
 
 			debugoverlay.Text(LastPos, CurTimes, 0.1, false)
@@ -266,8 +264,6 @@ local function WeaponCanPenetrate(Weapon, TraceData, Target, TargetPos)
 			debugoverlay.Line(Trace.start, tr.HitPos, 0.1, Cache.Colors.Pink, true)
 
 			if tr.Hit then
-				CurTimes = CurTimes + 1
-
 				LastPos = tr.HitPos
 
 				debugoverlay.Text(LastPos, CurTimes, 0.1, false)
@@ -284,6 +280,8 @@ local function WeaponCanPenetrate(Weapon, TraceData, Target, TargetPos)
 				end
 			end
 		end
+
+		CurTimes = CurTimes + 1
 	end
 
 	debugoverlay.Text(TraceData.HitPos, "TraceTarget", 0.1, false)
