@@ -2,7 +2,9 @@
 	https://github.com/awesomeusername69420/miscellaneous-gmod-stuff
 
 	Automatically generates nospread seeds for engine weapons
+
 	https://developer.valvesoftware.com/wiki/CShotManipulator
+	https://github.com/ValveSoftware/source-sdk-2013/blob/master/mp/src/game/shared/shot_manipulator.h
 
 	Requires https://github.com/awesomeusername69420/miscellaneous-gmod-stuff/blob/main/includes/modules/CUniformRandomStream.lua
 ]]
