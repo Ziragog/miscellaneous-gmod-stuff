@@ -106,7 +106,7 @@ function CUniformRandomStream.Meta:RandomFloatExp(Min, Max, Exp)
 	return Float
 end
 
--- Generate a random integer
+-- Generate a random unsigned integer
 function CUniformRandomStream.Meta:RandomInt(Min, Max)
 	local math_abs = math.abs
 
