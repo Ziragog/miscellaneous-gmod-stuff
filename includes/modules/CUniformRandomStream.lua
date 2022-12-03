@@ -33,7 +33,7 @@ end
 -- Generate a random integer
 function CUniformRandomStream.Meta:GenerateRandomNumber()
 	local math_floor = math.floor
-	local j, k = NTAB + 8, 0
+	local j, k = 0, 0
 
 	if self.m_idum <= 0 or not self.m_iy then
 		self.m_idum = -self.m_idum
@@ -42,6 +42,7 @@ function CUniformRandomStream.Meta:GenerateRandomNumber()
 			self.m_idum = 1
 		end
 
+		j = NTAB + 8
 		while j > 0 do
 			j = j - 1
 
@@ -92,6 +93,38 @@ function CUniformRandomStream.Meta:RandomFloat(Min, Max)
 	end
 
 	return (Float * (Max - Min)) + Min
+end
+
+-- Generate a random float to an exponent (Kinda retarded but may as well include it)
+function CUniformRandomStream.Meta:RandomFloatExp(Min, Max, Exp)
+	local Float = self:RandomFloat(Min, Max)
+
+	if Exp ~= 1 then
+		Float = math.pow(Float, Exp)
+	end
+
+	return Float
+end
+
+-- Generate a random integer
+function CUniformRandomStream.Meta:RandomInt(Min, Max)
+	local math_abs = math.abs
+
+	local MaxAcceptable
+	local X = math_abs(Max - Min + 1)
+
+	if X <= 1 or MAX_RANDOM_RANGE < X - 1 then
+		return Min
+	end
+
+	MaxAcceptable = math_abs(MAX_RANDOM_RANGE - ((MAX_RANDOM_RANGE + 1) % X))
+
+	local Int = math_abs(self:GenerateRandomNumber())
+	while Int > MaxAcceptable do
+		Int = math_abs(self:GenerateRandomNumber())
+	end
+
+	return Min + (Int % X)
 end
 
 -- Create a new CUniformRandomStream object
