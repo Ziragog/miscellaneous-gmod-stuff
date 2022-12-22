@@ -2,6 +2,9 @@
 	https://github.com/awesomeusername69420/miscellaneous-gmod-stuff
 
 	Better ESP because BitflagESP kind of sucked...
+
+	Concommand:
+		lv_menu		-	Opens the menu
 ]]
 
 --------------------------- Free Cloud Storage 100gb ---------------------------
@@ -849,11 +852,19 @@ do
 			Checkbox.m_tTable = Table
 			Checkbox.m_strKey = Key
 			Checkbox.m_bRight = Right
+			Checkbox.m_flLastThink = 0
 
 			Checkbox:SetTextColor(Cache.Colors.Black)
 			Checkbox:SetText(Label)
 			Checkbox:SetSkin("Default")
 			Checkbox:SetChecked(tobool(Table[Key]))
+
+			function Checkbox:Think()
+				if CurTime() - self.m_flLastThink >= 0.3 then
+					self:SetChecked(self.m_tTable[self.m_strKey])
+					self.m_flLastThink = CurTime()
+				end
+			end
 
 			function Checkbox:OnChange(NewValue)
 				self.m_tTable[self.m_strKey] = NewValue
@@ -1288,6 +1299,46 @@ do
 		end
 
 		Panel.m_pTextbox = Textbox
+	end)
+
+	Frame:AddTab("Config", function(Panel)
+		local SaveButton = vgui.Create("DButton", Panel)
+		SaveButton:Dock(TOP)
+		SaveButton:SetText("Save")
+		SaveButton:SetSkin("Default")
+
+		function SaveButton:DoClick()
+			file.Write("levisuals.txt", util.TableToJSON(Cache.Settings, true))
+		end
+
+		local LoadButton = vgui.Create("DButton", Panel)
+		LoadButton:Dock(TOP)
+		LoadButton:SetText("Load")
+		LoadButton:SetSkin("Default")
+
+		function LoadButton:MergeTable(Destination, Source) -- Fix JSONToTable color issue
+			for k, v in pairs(Source) do
+				if type(v) == "table" and type(Destination[k]) == "table" then
+					if v.r and v.g and v.b and v.a then
+						debug.setmetatable(v, Cache.Registry.Color)
+						Destination[k] = v
+
+						continue
+					end
+
+					self:MergeTable(Destination[k], v)
+				else
+					Destination[k] = v
+				end
+			end
+		end
+
+		function LoadButton:DoClick()
+			if file.Exists("levisuals.txt", "DATA") then
+				local Data = file.Read("levisuals.txt", "DATA")
+				self:MergeTable(Cache.Settings, util.JSONToTable(Data))
+			end
+		end
 	end)
 end
 
