@@ -1308,7 +1308,7 @@ do
 		SaveButton:SetSkin("Default")
 
 		function SaveButton:DoClick()
-			file.Write("levisuals.txt", util.TableToJSON(Cache.Settings, true))
+			file.Write("levisuals.txt", util.TableToJSON({ Cache.Settings, Cache.EntityClasses }, true))
 		end
 
 		local LoadButton = vgui.Create("DButton", Panel)
@@ -1336,8 +1336,38 @@ do
 		function LoadButton:DoClick()
 			if file.Exists("levisuals.txt", "DATA") then
 				local Data = file.Read("levisuals.txt", "DATA")
-				self:MergeTable(Cache.Settings, util.JSONToTable(Data))
+				Data = util.JSONToTable(Data)
+
+				self:MergeTable(Cache.Settings, Data[1])
+				self:MergeTable(Cache.EntityClasses, Data[2])
 			end
+		end
+
+		local Textbox = vgui.Create("DTextEntry", Panel)
+
+		Textbox.m_flLastThink = 0
+
+		Textbox:Dock(TOP)
+		Textbox:SetUpdateOnType(true)
+		Textbox:SetValue(Cache.Settings.Font)
+		Textbox:SetSkin("Default")
+
+		Textbox.m_fThink = Textbox.Think
+		function Textbox:Think()
+			self:m_fThink()
+
+			if self:IsEditing() then return end
+			if CurTime() - self.m_flLastThink >= 0.3 then
+				self:SetValue(Cache.Settings.Font)
+				self.m_flLastThink = CurTime()
+			end
+		end
+
+		function Textbox:OnValueChange(NewValue)
+			pcall(function()
+				draw.GetFontHeight(NewValue)
+				Cache.Settings.Font = NewValue
+			end)
 		end
 	end)
 end
