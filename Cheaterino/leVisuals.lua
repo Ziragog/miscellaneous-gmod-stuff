@@ -1365,7 +1365,7 @@ do
 
 		function Textbox:OnValueChange(NewValue)
 			pcall(function()
-				draw.GetFontHeight(NewValue)
+				draw.GetFontHeight(NewValue) -- If this errors the font doesn't exist, don't try to use it
 				Cache.Settings.Font = NewValue
 			end)
 		end
