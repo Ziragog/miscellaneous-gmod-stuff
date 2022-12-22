@@ -128,7 +128,7 @@ do
 			},
 
 			Tracers = true,
-			UserGroup = IsPlayer and true or nil,
+			UserGroup = IsPlayer and true or nil, -- If it's an entity, make it nil so it won't be stored
 			Team = IsPlayer and true or nil,
 			Avatar = IsPlayer and false or nil,
 
@@ -164,7 +164,7 @@ do
 
 				Chams = {
 					Visible = BaseColor,
-					Occluded = Color(math.Clamp(255 - BaseColor.r, 0, 255), math.Clamp(255 - BaseColor.g, 0, 255), math.Clamp(255 - BaseColor.b, 0, 255), BaseColor.a)
+					Occluded = Color(math.Clamp(255 - BaseColor.r, 0, 255), math.Clamp(255 - BaseColor.g, 0, 255), math.Clamp(255 - BaseColor.b, 0, 255), BaseColor.a) -- Invert the base color
 				}
 			}
 		}
@@ -413,7 +413,7 @@ function Functions.Entity.Get2DBounds(Entity)
 
 	local Left, Right, Top, Bottom = Coords[1].x, Coords[1].x, Coords[1].y, Coords[1].y
 
-	for i = 1, #Coords do
+	for i = 1, #Coords do -- Pick the best corners
 		local v = Coords[i]
 		if Left > v.x then Left = v.x end
 		if Top > v.y then Top = v.y end
@@ -436,6 +436,7 @@ function Functions.Entity.ESP2D(Entity, OptionsTable)
 
 	if OptionsTable.Tracers then
 		local WorldSpaceCenter = Entity:WorldSpaceCenter():ToScreen()
+
 		surface.SetDrawColor(Colors.Tracers)
 		surface.DrawLine(WorldSpaceCenter.x, WorldSpaceCenter.y, Cache.ScreenData.Center.x, Cache.ScreenData.Center.y)
 	end
