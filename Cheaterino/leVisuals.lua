@@ -1252,7 +1252,7 @@ do
 		SaveButton:SetSkin("Default")
 
 		function SaveButton:DoClick()
-			file.Write("levisuals.txt", util.TableToJSON({ Cache.Settings, Cache.EntityClasses }, true))
+			file.Write("levisuals.json", util.TableToJSON({ Cache.Settings, Cache.EntityClasses }, true))
 		end
 
 		local LoadButton = vgui.Create("DButton", Panel)
@@ -1278,8 +1278,8 @@ do
 		end
 
 		function LoadButton:DoClick()
-			if file.Exists("levisuals.txt", "DATA") then
-				local Data = file.Read("levisuals.txt", "DATA")
+			if file.Exists("levisuals.json", "DATA") then
+				local Data = file.Read("levisuals.json", "DATA")
 				Data = util.JSONToTable(Data)
 
 				self:MergeTable(Cache.Settings, Data[1])
