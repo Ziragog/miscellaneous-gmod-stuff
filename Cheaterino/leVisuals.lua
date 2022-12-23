@@ -5,7 +5,13 @@
 
 	Concommand:
 		lv_menu		-	Opens the menu
+
+	Optional Requirement: https://github.com/Facepunch/garrysmod/pull/1590
 ]]
+
+if file.Exists("lua/includes/modules/outline.lua", "MOD") then
+	pcall(require, "outline")
+end
 
 --------------------------- Free Cloud Storage 100gb ---------------------------
 
@@ -98,6 +104,7 @@ end
 do
 	-- Quickly make an option table
 	local function NewESPOptions(IsPlayer, BaseColor)
+		local iBaseColor = Color(math.Clamp(255 - BaseColor.r, 0, 255), math.Clamp(255 - BaseColor.g, 0, 255), math.Clamp(255 - BaseColor.b, 0, 255), BaseColor.a) -- Invert the base color
 		return {
 			Enabled = true,
 
@@ -151,6 +158,13 @@ do
 				}
 			},
 
+			Outlines = {
+				Enabled = false,
+
+				Visible = true,
+				Occluded = true
+			},
+
 			Colors = {
 				Box = {
 					Fill = BaseColor,
@@ -176,12 +190,17 @@ do
 
 				Chams = {
 					Visible = BaseColor,
-					Occluded = Color(math.Clamp(255 - BaseColor.r, 0, 255), math.Clamp(255 - BaseColor.g, 0, 255), math.Clamp(255 - BaseColor.b, 0, 255), BaseColor.a), -- Invert the base color
+					Occluded = iBaseColor,
 
 					Weapon = {
 						Visible = BaseColor,
-						Occluded = Color(math.Clamp(255 - BaseColor.r, 0, 255), math.Clamp(255 - BaseColor.g, 0, 255), math.Clamp(255 - BaseColor.b, 0, 255), BaseColor.a)
+						Occluded = iBaseColor
 					}
+				},
+
+				Outlines = {
+					Visible = BaseColor,
+					Occluded = iBaseColor
 				}
 			}
 		}
@@ -722,6 +741,16 @@ hook.Add("Tick", "leVisuals_Tick", function()
 	end
 end)
 
+-- Update screen cache
+hook.Add("OnScreenSizeChanged", "leVisuals_OnScreenSizeChanged", function()
+	Cache.ScreenData.Width = ScrW()
+	Cache.ScreenData.Height = ScrH()
+	Cache.ScreenData.Center.x = Cache.ScreenData.Width / 2
+	Cache.ScreenData.Center.y = Cache.ScreenData.Height / 2
+end)
+
+-- Time to render! (I hate having so many loops like this it looks retarded)
+
 -- Render 2D visuals
 hook.Add("PostDrawHUD", "leVisuals_PostDrawHUD", function()
 	cam.Start2D() -- Seems pointless, but this actually fixes a major issue caused by the rendering of the Avatar ESP
@@ -797,12 +826,49 @@ hook.Add("PreDrawEffects", "leVisuals_PreDrawEffects", function()
 	render.MaterialOverride(nil)
 end)
 
--- Update screen cache
-hook.Add("OnScreenSizeChanged", "leVisuals_OnScreenSizeChanged", function()
-	Cache.ScreenData.Width = ScrW()
-	Cache.ScreenData.Height = ScrH()
-	Cache.ScreenData.Center.x = Cache.ScreenData.Width / 2
-	Cache.ScreenData.Center.y = Cache.ScreenData.Height / 2
+-- Render halos/outlines
+hook.Add("PreDrawHalos", "leVisuals_PreDrawHalos", function()
+	if Cache.Settings.Player.Enabled then
+		for i = 1, #Cache.PlayerList do
+			if not Cache.PlayerList[i]:IsValid() then continue end
+
+			local PlayerTable = Cache.EntityData[Cache.PlayerList[i]] or Functions.Player.UpdateInfo(Cache.PlayerList[i])
+			if not PlayerTable or not PlayerTable.ShouldRender or not PlayerTable.OptionsTable.Outlines.Enabled then continue end
+			if not Functions.Entity.OnScreen(Cache.PlayerList[i]) then continue end
+
+			if outline then
+				local CurTable = { Cache.PlayerList[i] } -- I hate how these functions have to work, but such is such
+
+				outline.Add(CurTable, PlayerTable.OptionsTable.Colors.Outlines.Occluded, OUTLINE_MODE_NOTVISIBLE)
+				outline.Add(CurTable, PlayerTable.OptionsTable.Colors.Outlines.Visible, OUTLINE_MODE_VISIBLE)
+			else
+				halo.Add({ Cache.PlayerList[i] }, PlayerTable.OptionsTable.Colors.Outlines.Occluded, 2, 2, 1, false, true) -- Halos can't do invisible/visible difference
+			end
+		end
+	end
+
+	if Cache.Settings.Entity.Enabled and Cache.Settings.Entity.Outlines.Enabled then
+		local ColorTable = Cache.Settings.Entity.Colors.Outlines
+
+		for i = 1, #Cache.EntityClasses do
+			local Ents = ents.FindByClass(Cache.EntityClasses[i])
+
+			for ii = 1, #Ents do
+				local EntityTable = Cache.EntityData[Ents[ii]] or Functions.Entity.UpdateInfo(Ents[ii])
+				if not EntityTable or not EntityTable.ShouldRender then continue end
+				if not Functions.Entity.OnScreen(Ents[ii]) then continue end
+
+				if outline then
+					local CurTable = { Ents[ii] }
+
+					outline.Add(CurTable, ColorTable.Occluded, OUTLINE_MODE_NOTVISIBLE)
+					outline.Add(CurTable, ColorTable.Visible, OUTLINE_MODE_VISIBLE)
+				else
+					halo.Add({ Ents[ii] }, ColorTable.Occluded, 2, 2, 1, false, true)
+				end
+			end
+		end
+	end
 end)
 
 --------------------------- Menu Setup ---------------------------
@@ -1096,6 +1162,14 @@ do
 				SubPanel:AddColorbox(0, VarTable.Colors.Chams.Weapon, "Visible", true)
 				SubPanel:AddCheckbox(3, "Occluded", VarTable.Chams.Weapon, "Occluded")
 				SubPanel:AddColorbox(0, VarTable.Colors.Chams.Weapon, "Occluded", true)
+
+				SubPanel:AddCheckbox(1, "Outlines", VarTable.Outlines, "Enabled")
+				if outline then
+					SubPanel:AddCheckbox(2, "Visible", VarTable.Outlines, "Visible")
+					SubPanel:AddColorbox(0, VarTable.Colors.Outlines, "Visible", true)
+				end
+				SubPanel:AddCheckbox(2, "Occluded", VarTable.Outlines, "Occluded")
+				SubPanel:AddColorbox(0, VarTable.Colors.Outlines, "Occluded", true)
 			end, true)
 		end
 	end)
@@ -1142,6 +1216,14 @@ do
 		Panel:AddColorbox(0, VarTable.Colors.Chams.Weapon, "Visible", true)
 		Panel:AddCheckbox(3, "Occluded", VarTable.Chams.Weapon, "Occluded")
 		Panel:AddColorbox(0, VarTable.Colors.Chams.Weapon, "Occluded", true)
+
+		Panel:AddCheckbox(1, "Outlines", VarTable.Outlines, "Enabled")
+		if outline then
+			Panel:AddCheckbox(2, "Visible", VarTable.Outlines, "Visible")
+			Panel:AddColorbox(0, VarTable.Colors.Outlines, "Visible", true)
+		end
+		Panel:AddCheckbox(2, "Occluded", VarTable.Outlines, "Occluded")
+		Panel:AddColorbox(0, VarTable.Colors.Outlines, "Occluded", true)
 	end, true)
 
 	Frame:AddTab("Entity List", function(Panel)
