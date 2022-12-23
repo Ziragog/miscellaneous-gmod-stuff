@@ -1243,10 +1243,16 @@ do
 		List.m_pTextbox = Textbox
 
 		List.m_fRebuildTick = setfenv(function()
-			for k, _ in SortedPairs(self.m_tClasses) do
-				self:AddLine(k, table.HasValue(Cache.EntityClasses, k) and "True" or "False")
+			local Done = 10 -- Need to always yield on the 1st one to avoid problems
 
-				coroutine.yield()
+			for k, _ in SortedPairs(self.m_tClasses) do
+				if Done >= 10 then
+					Done = 0
+					coroutine.yield()
+				end
+
+				self:AddLine(k, table.HasValue(Cache.EntityClasses, k) and "True" or "False")
+				Done = Done + 1
 
 				if self.m_bKillCoroutine then break end
 			end
