@@ -141,7 +141,14 @@ do
 				Enabled = false,
 
 				Visible = true,
-				Occluded = true
+				Occluded = true,
+
+				Weapon = {
+					Enabled = true,
+
+					Visible = true,
+					Occluded = true
+				}
 			},
 
 			Colors = {
@@ -169,7 +176,12 @@ do
 
 				Chams = {
 					Visible = BaseColor,
-					Occluded = Color(math.Clamp(255 - BaseColor.r, 0, 255), math.Clamp(255 - BaseColor.g, 0, 255), math.Clamp(255 - BaseColor.b, 0, 255), BaseColor.a) -- Invert the base color
+					Occluded = Color(math.Clamp(255 - BaseColor.r, 0, 255), math.Clamp(255 - BaseColor.g, 0, 255), math.Clamp(255 - BaseColor.b, 0, 255), BaseColor.a), -- Invert the base color
+
+					Weapon = {
+						Visible = BaseColor,
+						Occluded = Color(math.Clamp(255 - BaseColor.r, 0, 255), math.Clamp(255 - BaseColor.g, 0, 255), math.Clamp(255 - BaseColor.b, 0, 255), BaseColor.a)
+					}
 				}
 			}
 		}
@@ -603,12 +615,18 @@ function Functions.Entity.ESP3D(Entity, OptionsTable)
 		local Weapon = Entity.GetActiveWeapon and Entity:GetActiveWeapon() or NULL
 
 		if OptionsTable.Chams.Occluded then
+			render.MaterialOverride(Cache.Materials.Occluded)
 			render.SetColorModulation(Colors.Occluded.r / 255, Colors.Occluded.g / 255, Colors.Occluded.b / 255)
 			render.SetBlend(Colors.Occluded.a / 255)
-			render.MaterialOverride(Cache.Materials.Occluded)
 
 			Entity:DrawModel()
-			if Weapon:IsValid() then Weapon:DrawModel() end
+
+			if Weapon:IsValid() and OptionsTable.Chams.Weapon.Enabled and OptionsTable.Chams.Weapon.Occluded then
+				render.SetColorModulation(Colors.Weapon.Occluded.r / 255, Colors.Weapon.Occluded.g / 255, Colors.Weapon.Occluded.b / 255)
+				render.SetBlend(Colors.Weapon.Occluded.a / 255)
+
+				Weapon:DrawModel()
+			end
 		end
 
 		if OptionsTable.Chams.Visible then
@@ -617,7 +635,13 @@ function Functions.Entity.ESP3D(Entity, OptionsTable)
 			render.MaterialOverride(Cache.Materials.Visible)
 
 			Entity:DrawModel()
-			if Weapon:IsValid() then Weapon:DrawModel() end
+
+			if Weapon:IsValid() and OptionsTable.Chams.Weapon.Enabled and OptionsTable.Chams.Weapon.Visible then
+				render.SetColorModulation(Colors.Weapon.Visible.r / 255, Colors.Weapon.Visible.g / 255, Colors.Weapon.Visible.b / 255)
+				render.SetBlend(Colors.Weapon.Visible.a / 255)
+
+				Weapon:DrawModel()
+			end
 		end
 	end
 end
@@ -1067,6 +1091,11 @@ do
 				SubPanel:AddColorbox(0, VarTable.Colors.Chams, "Visible", true)
 				SubPanel:AddCheckbox(2, "Occluded", VarTable.Chams, "Occluded")
 				SubPanel:AddColorbox(0, VarTable.Colors.Chams, "Occluded", true)
+				SubPanel:AddCheckbox(2, "Weapon", VarTable.Chams.Weapon, "Enabled")
+				SubPanel:AddCheckbox(3, "Visible", VarTable.Chams.Weapon, "Visible")
+				SubPanel:AddColorbox(0, VarTable.Colors.Chams.Weapon, "Visible", true)
+				SubPanel:AddCheckbox(3, "Occluded", VarTable.Chams.Weapon, "Occluded")
+				SubPanel:AddColorbox(0, VarTable.Colors.Chams.Weapon, "Occluded", true)
 			end, true)
 		end
 	end)
@@ -1108,6 +1137,11 @@ do
 		Panel:AddColorbox(0, VarTable.Colors.Chams, "Visible", true)
 		Panel:AddCheckbox(2, "Occluded", VarTable.Chams, "Occluded")
 		Panel:AddColorbox(0, VarTable.Colors.Chams, "Occluded", true)
+		Panel:AddCheckbox(2, "Weapon", VarTable.Chams.Weapon, "Enabled")
+		Panel:AddCheckbox(3, "Visible", VarTable.Chams.Weapon, "Visible")
+		Panel:AddColorbox(0, VarTable.Colors.Chams.Weapon, "Visible", true)
+		Panel:AddCheckbox(3, "Occluded", VarTable.Chams.Weapon, "Occluded")
+		Panel:AddColorbox(0, VarTable.Colors.Chams.Weapon, "Occluded", true)
 	end, true)
 
 	Frame:AddTab("Entity List", function(Panel)
