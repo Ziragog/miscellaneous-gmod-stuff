@@ -12,9 +12,11 @@
 local Cache = {
 	LocalPlayer = LocalPlayer(),
 	AngleZero = Angle(0, 0, 0),
-	Menu = nil,
 	Registry = debug.getregistry(),
 	Clipboard = nil,
+
+	Menu = nil,
+	MenuPlayerOrder = { "Normal", "Protected", "Friends" },
 
 	Colors = {
 		White = Color(255, 255, 255, 255),
@@ -174,7 +176,7 @@ do
 	end
 
 	Cache.Settings.Player.Normal = NewESPOptions(true, Color(255, 0, 0, 255))
-	Cache.Settings.Player.Friend = NewESPOptions(true, Color(255, 255, 0, 255))
+	Cache.Settings.Player.Friends = NewESPOptions(true, Color(255, 255, 0, 255))
 	Cache.Settings.Player.Protected = NewESPOptions(true, Color(0, 200, 255, 255))
 	Cache.Settings.Entity = NewESPOptions(false, Color(200, 0, 255, 255))
 end
@@ -205,7 +207,7 @@ function Functions.Player.UpdateInfo(Player)
 	PlayerTable.Team = Player:Team()
 	PlayerTable.TeamName = team.GetName(PlayerTable.Team)
 	PlayerTable.Protected = Functions.Player.IsProtected(Player)
-	PlayerTable.OptionsTable = Cache.Settings.Player[((Cache.Settings.Player.Friend.Enabled and Player:GetFriendStatus() == "friend") and "Friend") or ((Cache.Settings.Player.Protected.Enabled and PlayerTable.Protected) and "Protected") or "Normal"] -- The bee's knees
+	PlayerTable.OptionsTable = Cache.Settings.Player[((Cache.Settings.Player.Friends.Enabled and Player:GetFriendStatus() == "friend") and "Friends") or ((Cache.Settings.Player.Protected.Enabled and PlayerTable.Protected) and "Protected") or "Normal"] -- The bee's knees
 
 	if not IsValid(PlayerTable.AvatarImage) then
 		local AvatarImage = vgui.Create("AvatarImage")
@@ -856,8 +858,8 @@ do
 
 			Checkbox:SetTextColor(Cache.Colors.Black)
 			Checkbox:SetText(Label)
-			Checkbox:SetSkin("Default")
 			Checkbox:SetChecked(tobool(Table[Key]))
+			Checkbox:SetSkin("Default")
 
 			function Checkbox:Think()
 				if CurTime() - self.m_flLastThink >= 0.3 then
@@ -941,7 +943,7 @@ do
 			end
 
 			function Colorbox:DoRightClick()
-				local Menu = DermaMenu()
+				local Menu = DermaMenu() -- Could pre-bake this but it's no biggie
 
 				Menu:AddOption("Copy", function(self)
 					Cache.Clipboard = tostring(self.m_pColorbox.m_tTable[self.m_pColorbox.m_strKey])
@@ -1019,146 +1021,54 @@ do
 		Panel.MakePanel = Frame.MakePanel
 		Panel.AddTab = Frame.AddTab
 
-		Panel:AddTab("Normal", function(SubPanel)
-			local VarTable = Cache.Settings.Player.Normal
+		for i = 1, #Cache.MenuPlayerOrder do
+			Panel:AddTab(Cache.MenuPlayerOrder[i], function(SubPanel)
+				local VarTable = Cache.Settings.Player[Cache.MenuPlayerOrder[i]]
 
-			SubPanel:AddCheckbox(0, "Enabled", VarTable, "Enabled")
+				SubPanel:AddCheckbox(0, "Enabled", VarTable, "Enabled")
 
-			SubPanel:AddCheckbox(1, "Box", VarTable.Box, "Enabled")
-			SubPanel:AddCheckbox(2, "Fill", VarTable.Box, "Fill")
-			SubPanel:AddColorbox(0, VarTable.Colors.Box, "Fill", true)
-			SubPanel:AddCheckbox(2, "Outline", VarTable.Box, "Outline")
-			SubPanel:AddColorbox(0, VarTable.Colors.Box, "Outline", true)
+				SubPanel:AddCheckbox(1, "Box", VarTable.Box, "Enabled")
+				SubPanel:AddCheckbox(2, "Fill", VarTable.Box, "Fill")
+				SubPanel:AddColorbox(0, VarTable.Colors.Box, "Fill", true)
+				SubPanel:AddCheckbox(2, "Outline", VarTable.Box, "Outline")
+				SubPanel:AddColorbox(0, VarTable.Colors.Box, "Outline", true)
 
-			SubPanel:AddCheckbox(1, "Name", VarTable, "Name")
-			SubPanel:AddColorbox(0, VarTable.Colors, "Name", true)
-			SubPanel:AddCheckbox(1, "Weapon", VarTable, "Weapon")
-			SubPanel:AddColorbox(0, VarTable.Colors, "Weapon", true)
+				SubPanel:AddCheckbox(1, "Name", VarTable, "Name")
+				SubPanel:AddColorbox(0, VarTable.Colors, "Name", true)
+				SubPanel:AddCheckbox(1, "Weapon", VarTable, "Weapon")
+				SubPanel:AddColorbox(0, VarTable.Colors, "Weapon", true)
 
-			SubPanel:AddCheckbox(1, "Bones", VarTable.Bones, "Enabled")
-			SubPanel:AddCheckbox(2, "Points", VarTable.Bones, "Points")
-			SubPanel:AddColorbox(0, VarTable.Colors.Bones, "Points", true)
-			SubPanel:AddCheckbox(2, "Lines", VarTable.Bones, "Lines")
-			SubPanel:AddColorbox(0, VarTable.Colors.Bones, "Lines", true)
+				SubPanel:AddCheckbox(1, "Bones", VarTable.Bones, "Enabled")
+				SubPanel:AddCheckbox(2, "Points", VarTable.Bones, "Points")
+				SubPanel:AddColorbox(0, VarTable.Colors.Bones, "Points", true)
+				SubPanel:AddCheckbox(2, "Lines", VarTable.Bones, "Lines")
+				SubPanel:AddColorbox(0, VarTable.Colors.Bones, "Lines", true)
 
-			SubPanel:AddCheckbox(1, "Hitboxes", VarTable.Hitboxes, "Enabled")
-			SubPanel:AddCheckbox(2, "Regular", VarTable.Hitboxes, "Regular")
-			SubPanel:AddColorbox(0, VarTable.Colors.Hitboxes, "Regular", true)
-			SubPanel:AddCheckbox(2, "Bounding Box", VarTable.Hitboxes, "BoundingBox")
-			SubPanel:AddColorbox(0, VarTable.Colors.Hitboxes, "BoundingBox", true)
+				SubPanel:AddCheckbox(1, "Hitboxes", VarTable.Hitboxes, "Enabled")
+				SubPanel:AddCheckbox(2, "Regular", VarTable.Hitboxes, "Regular")
+				SubPanel:AddColorbox(0, VarTable.Colors.Hitboxes, "Regular", true)
+				SubPanel:AddCheckbox(2, "Bounding Box", VarTable.Hitboxes, "BoundingBox")
+				SubPanel:AddColorbox(0, VarTable.Colors.Hitboxes, "BoundingBox", true)
 
-			SubPanel:AddCheckbox(1, "Health", VarTable.Health, "Enabled")
-			SubPanel:AddCheckbox(2, "Bar", VarTable.Health, "Bar")
-			SubPanel:AddCheckbox(2, "Amount", VarTable.Health, "Amount")
+				SubPanel:AddCheckbox(1, "Health", VarTable.Health, "Enabled")
+				SubPanel:AddCheckbox(2, "Bar", VarTable.Health, "Bar")
+				SubPanel:AddCheckbox(2, "Amount", VarTable.Health, "Amount")
 
-			SubPanel:AddCheckbox(1, "Tracers", VarTable, "Tracers")
-			SubPanel:AddColorbox(0, VarTable.Colors, "Tracers", true)
-			SubPanel:AddCheckbox(1, "User Group", VarTable, "UserGroup")
-			SubPanel:AddColorbox(0, VarTable.Colors, "UserGroup", true)
-			SubPanel:AddCheckbox(1, "Team", VarTable, "Team")
-			SubPanel:AddColorbox(0, VarTable.Colors, "Team", true)
-			SubPanel:AddCheckbox(1, "Avatar", VarTable, "Avatar")
+				SubPanel:AddCheckbox(1, "Tracers", VarTable, "Tracers")
+				SubPanel:AddColorbox(0, VarTable.Colors, "Tracers", true)
+				SubPanel:AddCheckbox(1, "User Group", VarTable, "UserGroup")
+				SubPanel:AddColorbox(0, VarTable.Colors, "UserGroup", true)
+				SubPanel:AddCheckbox(1, "Team", VarTable, "Team")
+				SubPanel:AddColorbox(0, VarTable.Colors, "Team", true)
+				SubPanel:AddCheckbox(1, "Avatar", VarTable, "Avatar")
 
-			SubPanel:AddCheckbox(1, "Chams", VarTable.Chams, "Enabled")
-			SubPanel:AddCheckbox(2, "Visible", VarTable.Chams, "Visible")
-			SubPanel:AddColorbox(0, VarTable.Colors.Chams, "Visible", true)
-			SubPanel:AddCheckbox(2, "Occluded", VarTable.Chams, "Occluded")
-			SubPanel:AddColorbox(0, VarTable.Colors.Chams, "Occluded", true)
-		end, true)
-
-		Panel:AddTab("Friends", function(SubPanel)
-			local VarTable = Cache.Settings.Player.Friend
-
-			SubPanel:AddCheckbox(0, "Enabled", VarTable, "Enabled")
-
-			SubPanel:AddCheckbox(1, "Box", VarTable.Box, "Enabled")
-			SubPanel:AddCheckbox(2, "Fill", VarTable.Box, "Fill")
-			SubPanel:AddColorbox(0, VarTable.Colors.Box, "Fill", true)
-			SubPanel:AddCheckbox(2, "Outline", VarTable.Box, "Outline")
-			SubPanel:AddColorbox(0, VarTable.Colors.Box, "Outline", true)
-
-			SubPanel:AddCheckbox(1, "Name", VarTable, "Name")
-			SubPanel:AddColorbox(0, VarTable.Colors, "Name", true)
-			SubPanel:AddCheckbox(1, "Weapon", VarTable, "Weapon")
-			SubPanel:AddColorbox(0, VarTable.Colors, "Weapon", true)
-
-			SubPanel:AddCheckbox(1, "Bones", VarTable.Bones, "Enabled")
-			SubPanel:AddCheckbox(2, "Points", VarTable.Bones, "Points")
-			SubPanel:AddColorbox(0, VarTable.Colors.Bones, "Points", true)
-			SubPanel:AddCheckbox(2, "Lines", VarTable.Bones, "Lines")
-			SubPanel:AddColorbox(0, VarTable.Colors.Bones, "Lines", true)
-
-			SubPanel:AddCheckbox(1, "Hitboxes", VarTable.Hitboxes, "Enabled")
-			SubPanel:AddCheckbox(2, "Regular", VarTable.Hitboxes, "Regular")
-			SubPanel:AddColorbox(0, VarTable.Colors.Hitboxes, "Regular", true)
-			SubPanel:AddCheckbox(2, "Bounding Box", VarTable.Hitboxes, "BoundingBox")
-			SubPanel:AddColorbox(0, VarTable.Colors.Hitboxes, "BoundingBox", true)
-
-			SubPanel:AddCheckbox(1, "Health", VarTable.Health, "Enabled")
-			SubPanel:AddCheckbox(2, "Bar", VarTable.Health, "Bar")
-			SubPanel:AddCheckbox(2, "Amount", VarTable.Health, "Amount")
-
-			SubPanel:AddCheckbox(1, "Tracers", VarTable, "Tracers")
-			SubPanel:AddColorbox(0, VarTable.Colors, "Tracers", true)
-			SubPanel:AddCheckbox(1, "User Group", VarTable, "UserGroup")
-			SubPanel:AddColorbox(0, VarTable.Colors, "UserGroup", true)
-			SubPanel:AddCheckbox(1, "Team", VarTable, "Team")
-			SubPanel:AddColorbox(0, VarTable.Colors, "Team", true)
-			SubPanel:AddCheckbox(1, "Avatar", VarTable, "Avatar")
-
-			SubPanel:AddCheckbox(1, "Chams", VarTable.Chams, "Enabled")
-			SubPanel:AddCheckbox(2, "Visible", VarTable.Chams, "Visible")
-			SubPanel:AddColorbox(0, VarTable.Colors.Chams, "Visible", true)
-			SubPanel:AddCheckbox(2, "Occluded", VarTable.Chams, "Occluded")
-			SubPanel:AddColorbox(0, VarTable.Colors.Chams, "Occluded", true)
-		end, true)
-
-		Panel:AddTab("Protected", function(SubPanel)
-			local VarTable = Cache.Settings.Player.Protected
-
-			SubPanel:AddCheckbox(0, "Enabled", VarTable, "Enabled")
-
-			SubPanel:AddCheckbox(1, "Box", VarTable.Box, "Enabled")
-			SubPanel:AddCheckbox(2, "Fill", VarTable.Box, "Fill")
-			SubPanel:AddColorbox(0, VarTable.Colors.Box, "Fill", true)
-			SubPanel:AddCheckbox(2, "Outline", VarTable.Box, "Outline")
-			SubPanel:AddColorbox(0, VarTable.Colors.Box, "Outline", true)
-
-			SubPanel:AddCheckbox(1, "Name", VarTable, "Name")
-			SubPanel:AddColorbox(0, VarTable.Colors, "Name", true)
-			SubPanel:AddCheckbox(1, "Weapon", VarTable, "Weapon")
-			SubPanel:AddColorbox(0, VarTable.Colors, "Weapon", true)
-
-			SubPanel:AddCheckbox(1, "Bones", VarTable.Bones, "Enabled")
-			SubPanel:AddCheckbox(2, "Points", VarTable.Bones, "Points")
-			SubPanel:AddColorbox(0, VarTable.Colors.Bones, "Points", true)
-			SubPanel:AddCheckbox(2, "Lines", VarTable.Bones, "Lines")
-			SubPanel:AddColorbox(0, VarTable.Colors.Bones, "Lines", true)
-
-			SubPanel:AddCheckbox(1, "Hitboxes", VarTable.Hitboxes, "Enabled")
-			SubPanel:AddCheckbox(2, "Regular", VarTable.Hitboxes, "Regular")
-			SubPanel:AddColorbox(0, VarTable.Colors.Hitboxes, "Regular", true)
-			SubPanel:AddCheckbox(2, "Bounding Box", VarTable.Hitboxes, "BoundingBox")
-			SubPanel:AddColorbox(0, VarTable.Colors.Hitboxes, "BoundingBox", true)
-
-			SubPanel:AddCheckbox(1, "Health", VarTable.Health, "Enabled")
-			SubPanel:AddCheckbox(2, "Bar", VarTable.Health, "Bar")
-			SubPanel:AddCheckbox(2, "Amount", VarTable.Health, "Amount")
-
-			SubPanel:AddCheckbox(1, "Tracers", VarTable, "Tracers")
-			SubPanel:AddColorbox(0, VarTable.Colors, "Tracers", true)
-			SubPanel:AddCheckbox(1, "User Group", VarTable, "UserGroup")
-			SubPanel:AddColorbox(0, VarTable.Colors, "UserGroup", true)
-			SubPanel:AddCheckbox(1, "Team", VarTable, "Team")
-			SubPanel:AddColorbox(0, VarTable.Colors, "Team", true)
-			SubPanel:AddCheckbox(1, "Avatar", VarTable, "Avatar")
-
-			SubPanel:AddCheckbox(1, "Chams", VarTable.Chams, "Enabled")
-			SubPanel:AddCheckbox(2, "Visible", VarTable.Chams, "Visible")
-			SubPanel:AddColorbox(0, VarTable.Colors.Chams, "Visible", true)
-			SubPanel:AddCheckbox(2, "Occluded", VarTable.Chams, "Occluded")
-			SubPanel:AddColorbox(0, VarTable.Colors.Chams, "Occluded", true)
-		end, true)
+				SubPanel:AddCheckbox(1, "Chams", VarTable.Chams, "Enabled")
+				SubPanel:AddCheckbox(2, "Visible", VarTable.Chams, "Visible")
+				SubPanel:AddColorbox(0, VarTable.Colors.Chams, "Visible", true)
+				SubPanel:AddCheckbox(2, "Occluded", VarTable.Chams, "Occluded")
+				SubPanel:AddColorbox(0, VarTable.Colors.Chams, "Occluded", true)
+			end, true)
+		end
 	end)
 
 	Frame:AddTab("Entities", function(Panel)
